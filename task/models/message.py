@@ -15,7 +15,7 @@ class Message:
     def to_dict(self) -> dict[str, Any]:
         result = {
             "role": self.role.value,
-            "content": self.content
+            "content": self.content if self.content is not None else ""
         }
         if self.tool_call_id:
             result["tool_call_id"] = self.tool_call_id

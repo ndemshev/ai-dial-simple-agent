@@ -36,17 +36,22 @@ class WebSearchTool(BaseTool):
     @property
     def name(self) -> str:
         #TODO: Provide tool name as `web_search_tool`
-        raise NotImplementedError()
+        return "web_search_tool"
 
     @property
     def description(self) -> str:
         #TODO: Provide description of this tool
-        raise NotImplementedError()
+        return "Web search tool"
 
     @property
     def input_schema(self) -> dict[str, Any]:
         #TODO: Provide tool params Schema (it applies `request` string to search by)
-        raise NotImplementedError()
+        return {"type": "object",
+                "properties": {
+                    "request": {"type": "string", "description": "The request string to search by"}
+                },
+                "required": ["request"]
+        }
 
     def execute(self, arguments: dict[str, Any]) -> str:
         #TODO:
@@ -56,4 +61,15 @@ class WebSearchTool(BaseTool):
         #    - "tools": [{"type": "static_function", "static_function": {"name": "google_search", "description": "Grounding with Google Search","configuration": {}}}]
         # 3. Make POST call with `requests` lib: `url=self.__endpoint, headers=headers, json=request_dat`
         # 4. Check if response status is 200 and if yes then return message content, otherwise return `f"Error: {response.status_code} {response.text}"`
-        raise NotImplementedError()
+        headers = {"api-key": self.__api_key, "Content-Type": "application/json"}
+        request_data =  {"messages": [{"role": "user", "content": str(arguments["request"])}],
+                         "tools": [{"type": "static_function", "static_function": {"name": "google_search", "description": "Grounding with Google Search","configuration": {}}}]}
+        response = requests.post(self.__endpoint, headers=headers, json=request_data)
+        if response.status_code != requests.codes.ok:
+            return f"Error: {response.status_code} {response.text}"
+        else:
+            data = response.json()
+            if "error" in data:
+                return data["error"]
+            return data["choices"][0]["message"]["content"]
+
